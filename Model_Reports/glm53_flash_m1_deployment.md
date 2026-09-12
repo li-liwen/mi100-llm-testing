@@ -74,7 +74,13 @@ docker run -d --name "$NAME" --ipc=host --cpuset-cpus=0-23 --group-add=video \
 echo "started; ~14 min to serving (169 GB indexed load + Triton JIT warmup + graph capture)"
 ```
 
-The image is not on Docker Hub (fork-local); rebuild with the vLLM branch's
+Production deployment is docker-compose managed: the compose file lives at the
+deployment root (`/home/ubuntu/glm-5.3-flash/compose.yaml`, not in the vLLM repo),
+carries `restart: unless-stopped`, and is kept identical to the running container —
+each configuration change updates that file and archives the superseded one in
+`compose.history/` (one dated file per change, with a README table). The compose file
+adds the gfx908 stability env on top of the image-baked defaults; the image is
+fork-local (not on Docker Hub), rebuilt with the vLLM branch's
 `deploy/glm53-gfx908/scripts/build.sh` — it pins the base image by digest, builds the
 wheel with `PYTORCH_ROCM_ARCH=gfx908`, and installs only `tilelang`/`apache-tvm-ffi`
 on top of the base (everything else already satisfies the requirements; torch/triton/

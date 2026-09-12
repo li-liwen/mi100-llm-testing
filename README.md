@@ -5,6 +5,12 @@ This is a repository for documenting the setup and performance of MI100s in popu
 
 vLLM officially supports MI200 and MI300 series GPUs, but older cards like the MI100 (gfx908) are not officially supported. With some modifications it is possible to run vLLM on these GPUs. The MI100 lacks FP8/FP4 hardware and is incompatible with Composable Kernel (CK) ops, but Triton-based kernels work well.
 
+**9/12/2026 Update — GLM-5.3-Flash W4A16 AutoRound on 8x MI100 (TP4xPP2), Milestone 1**
+* First GLM-5.3-Flash deployment on MI100: the exact AutoRound W4A16 checkpoint (355B MoE, sym INT4 GS128) loads and serves through a fork of upstream vLLM main (`li-liwen/vllm feat/glm53-flash-gfx908`, 70 commits, base image `btbtyler09/vllm-rocm-gfx908:v0.28.0rc7.dev-q38fn`). Start script: [`scripts/serve_glm53_flash_m1.sh`](scripts/serve_glm53_flash_m1.sh).
+* 8x MI100 TP4xPP2, native MTP depth 2 + HIP graphs: **c=1 pooled decode 38.8 tok/s** (code 46.6 / prose 38.8 / math 19.1) vs the >=50 tok/s acceptance gate; depth 1 is ~30, eager ~13. Text, reasoning, tool calling and image understanding verified.
+* The checkpoint ships stale intra-shard duplicate tensors with index-mapped repairs — loaded via a new index-respecting safetensors mode (`{"safetensors_use_index": true}`), no checkpoint repacking. INC/auto-round INT4 routes to TritonW4A16 + TRITON WNA16 MoE on gfx908 (Marlin rejected).
+* Milestone report with all measurements, known issues (MTP depth-3 HSA faults, 1M-context KV-feasibility math) and repro commands: [`Model_Reports/glm53_flash_m1_deployment.md`](Model_Reports/glm53_flash_m1_deployment.md); approved deployment plan: [`docs/glm53_flash_m1_plan.md`](docs/glm53_flash_m1_plan.md).
+
 **9/7/2026 Update — Qwen3.8-Flash-Next (180B MoE, GPTQ-4bit) final release: rc9**
 * Image `btbtyler09/vllm-rocm-gfx908:v0.28.0rc9.dev-q38fn` (vLLM v0.28 + gfx908 decode path: W4A8/W8A16 HIP GEMVs, fused GDN/QSA/PLE decode glue, push all-reduce over xGMI with fused producer/consumer, radix sampler, HIP graphs). Start script: [`scripts/serve_qwen38_flash_next.sh`](scripts/serve_qwen38_flash_next.sh).
 * 4x MI100 at 200 W: **c=1 107.5 tok/s (9.4 ms TPOT)**, c=16 542, c=64 567, 16K-context c=4 138 tok/s (TTFT 9.0 s); GSM8K 1281/1319, PPL 3.138 (== the bf16 reference). Bring-up was 17.5 tok/s at c=1 on 9/2.

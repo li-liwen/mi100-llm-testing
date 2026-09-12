@@ -6,6 +6,7 @@ configs for one model are fine when they serve different use cases (for example
 interactive spec-decode vs batch throughput, or a 290 W power-cap run); release
 candidates, ablation arms and superseded runs are not kept here.
 
+- `glm53_flash_m1_deployment.md` — GLM-5.3-Flash W4A16 AutoRound on 8x MI100 (TP4xPP2, MTP depth 2 + HIP graphs), Milestone 1 deployment report.
 - `benchmark_<model>.md` — the current recommended configuration (200 W cap).
 - `benchmark_<model>_<variant>.md` — a use-case variant, named for what differs.
 - `json_data/` — the raw numbers behind each report in the root.
